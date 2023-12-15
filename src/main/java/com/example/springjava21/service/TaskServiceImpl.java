@@ -5,10 +5,10 @@ import com.example.springjava21.db.TaskRespository;
 import com.example.springjava21.dto.Task;
 import com.example.springjava21.dto.TaskStatus;
 import com.example.springjava21.utils.Unit;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Component
+@Transactional
 public class TaskServiceImpl implements TaskService{
 
     Logger logger = Logger.getLogger(TaskServiceImpl.class.getName());
@@ -23,14 +24,11 @@ public class TaskServiceImpl implements TaskService{
     @Autowired
     private TaskRespository taskRespository;
 
-    @Autowired
-    private ModelMapper modelMapper;
     @Override
     public Function<Task, Task> createTask() {
         return task -> {
             log(task);
-            TaskEntity taskEntity = convertToTaskEntity(task);
-            taskRespository.save(taskEntity);
+            taskRespository.save(convertToTaskEntity().apply(task));
             return task;
         };
     }
@@ -55,13 +53,23 @@ public class TaskServiceImpl implements TaskService{
         };
     }
 
-    private TaskEntity convertToTaskEntity(Task task) {
-        TaskEntity taskEntity = new TaskEntity();
-        String taskStatus = processTask(task);
-        taskEntity.setStatus(taskStatus);
-        BeanUtils.copyProperties(task, taskEntity);
-        return taskEntity;
+    @Override
+    public Function<Task, Unit> deleteTask() {
+        return task -> {
+            taskRespository.deleteById(task.taskId());
+            return Unit.unit();
+        };
     }
+
+    private Function<Task, TaskEntity> convertToTaskEntity() {
+        return task -> {
+                TaskEntity taskEntity = new TaskEntity();
+                String taskStatus = processTask(task);
+                taskEntity.setStatus(taskStatus);
+                BeanUtils.copyProperties(task, taskEntity);
+                return taskEntity;
+            };
+       }
 
     private Task convertTaskEntityToDto(TaskEntity taskEntity) {
         return new Task(taskEntity.getId(), taskEntity.getTitle(), taskEntity.getDescription(),

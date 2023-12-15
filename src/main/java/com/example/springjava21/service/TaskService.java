@@ -14,4 +14,7 @@ public interface TaskService {
     public Function<Integer, Task> getTaskById();
     public Function<Unit, List<Task>> getTasks();
 
+    public Function<Task, Unit> deleteTask();
+
+
 }

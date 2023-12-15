@@ -4,6 +4,7 @@ import com.example.springjava21.dto.Task;
 import com.example.springjava21.service.TaskService;
 import com.example.springjava21.utils.Unit;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,4 +35,12 @@ public class TaskController {
         Function<Unit, List<Task>> findTasksFunction = taskService.getTasks();
         return ResponseEntity.ok(findTasksFunction.apply(Unit.unit()));
     }
+
+    @DeleteMapping("/api/tasks/{taskId}")
+    public ResponseEntity<Unit> deleteTaskById(@PathVariable Integer taskId){
+        Function<Integer, Unit> deleteFunction = taskService.getTaskById()
+                                                    .andThen(taskService.deleteTask());
+        return ResponseEntity.ok(deleteFunction.apply(taskId));
+    }
+
 }
